@@ -24,8 +24,8 @@
     * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
     body { background-color: var(--bg); margin: 0; padding: 12px; color: #1e293b; }
     
-    /* पासवर्ड स्क्रीन स्टाईल्स */
-    #auth-overlay {
+    /* Firebase Auth Screen Styles */
+    #firebase-auth-overlay {
       position: fixed;
       top: 0; left: 0;
       width: 100vw; height: 100vh;
@@ -37,39 +37,29 @@
     }
     .auth-card {
       background: #ffffff;
-      padding: 30px 25px;
+      padding: 30px 24px;
       border-radius: 12px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       width: 100%;
-      max-width: 360px;
+      max-width: 380px;
       text-align: center;
     }
-    .auth-card h2 {
-      margin: 0 0 8px 0;
-      color: #1e3a8a;
-      font-size: 20px;
-    }
-    .auth-card p {
-      margin: 0 0 18px 0;
-      color: #64748b;
-      font-size: 13px;
-    }
+    .auth-card h2 { margin: 0 0 6px 0; color: #1e3a8a; font-size: 20px; }
+    .auth-card p { margin: 0 0 18px 0; color: #64748b; font-size: 13px; }
     .auth-card input {
       width: 100%;
       padding: 10px 12px;
-      font-size: 15px;
+      font-size: 14px;
       border: 1.5px solid #cbd5e1;
       border-radius: 6px;
       box-sizing: border-box;
       outline: none;
       margin-bottom: 12px;
     }
-    .auth-card input:focus {
-      border-color: #2563eb;
-    }
+    .auth-card input:focus { border-color: #2563eb; }
     .auth-card button {
       width: 100%;
-      padding: 10px;
+      padding: 11px;
       background: #1e3a8a;
       color: white;
       border: none;
@@ -79,21 +69,18 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    .auth-card button:hover {
-      background: #1d4ed8;
-    }
-    #auth-error {
+    .auth-card button:hover { background: #1d4ed8; }
+    #fb_auth_error {
       color: #ef4444;
-      font-size: 12px;
-      margin-top: 10px;
+      font-size: 12.5px;
+      margin-top: 12px;
       display: none;
       font-weight: bold;
+      line-height: 1.4;
     }
 
-    /* मुख्य अ‍ॅप रॅपर */
-    #app-container {
-      display: none;
-    }
+    /* Main App Wrapper */
+    #app-container { display: none; }
 
     .header { background: linear-gradient(135deg, var(--primary), #3b82f6); color: #fff; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 15px; position: relative; }
     .header h1 { margin: 0; font-size: 20px; }
@@ -258,21 +245,329 @@
 </head>
 <body>
 
-<!-- सुरक्षा लॉगिन विंडो -->
-<div id="auth-overlay">
+<!-- Firebase लॉगिन व नवीन नोंदणी स्क्रीन -->
+<div id="firebase-auth-overlay">
   <div class="auth-card">
-    <h2>🔐 अधिकृत प्रवेश</h2>
-    <p>CCE मूल्यमापन प्रणाली वापरण्यासाठी पासवर्ड प्रविष्ट करा</p>
-    <input type="password" id="auth-password" placeholder="पासवर्ड टाका..." onkeydown="handleAuthKey(event)">
-    <button onclick="verifyAccess()">प्रवेश करा</button>
-    <div id="auth-error">चुकीचा पासवर्ड! कृपया पुन्हा प्रयत्न करा.</div>
+    <h2 id="auth-title">🔐 शिक्षक लॉगिन</h2>
+    <p id="auth-subtitle">CCE प्रणाली वापरण्यासाठी लॉगिन करा</p>
+    
+    <input type="email" id="fb_user_email" placeholder="तुमचा ईमेल (उदा. teacher@gmail.com)">
+    <input type="password" id="fb_user_pass" placeholder="पासवर्ड (किमान ६ अक्षरे/अंक)">
+    
+    <button id="fb_auth_btn" onclick="handleAuthAction()">लॉगिन करा</button>
+    <div id="fb_auth_error"></div>
+    
+    <div style="margin-top: 16px; font-size: 13px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+      <span id="auth-toggle-text">खाते नाही का?</span>
+      <a href="javascript:void(0)" id="auth-toggle-btn" onclick="toggleAuthMode()" style="color: #0284c7; font-weight: bold; text-decoration: none; margin-left: 5px;">नवीन खाते तयार करा (Sign Up)</a>
+    </div>
   </div>
 </div>
 
-<!-- मुख्य प्रणाली कंटेनर (पासवर्ड टाकल्यावरच दृश्यमान) -->
+<!-- मुख्य ॲप कंटेनर (लॉगिन झाल्यावरच दृश्यमान) -->
 <div id="app-container">
   <div class="header no-print">
-    <button onclick="logoutApp()" style="position: absolute; right: 15px; top: 15px; background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;">🔒 लॉगआउट</button>
+    <button onclick="logoutFirebase()" style="position: absolute; right: 15px; top: 15px; background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;">🔒 लॉगआउट</button>
+    <h1>सातत्यपूर्ण सर्वंकष मूल्यमापन (CCE) सॉफ्टवेअर प्रणाली</h1>
+    <p>शाळा व्यवस्थापन, स्वतंत्र सत्र भारांश, वर्णनात्मक नोंद वही, विषयनिहाय व जातनिहाय श्रेणी तक्ता, निकाल पत्रक व प्रगती पत्रक</p>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="nav-tabs no-print">
+    <button class="tab-btn active" onclick="showTab('tab-school', this)">१. शाळा माहिती</button>
+    <button class="tab-btn" onclick="showTab('tab-student', this)">२. विद्यार्थी माहिती</button>
+    <button class="tab-btn wt" onclick="showTab('tab-weightage', this)">३. भारांश निश्चिती (सत्र १ व २)</button>
+    <button class="tab-btn subj" onclick="showTab('tab-subject-marks', this)">४. विषयनिहाय गुण नोंद</button>
+    <button class="tab-btn nv" onclick="showTab('tab-nondi-vahi', this)">५. 📖 वर्णनात्मक नोंद वही</button>
+    <button class="tab-btn grd" onclick="showTab('tab-grade-chart', this)">६. 📊 विषयनिहाय श्रेणी तक्ता</button>
+    <button class="tab-btn cst" onclick="showTab('tab-caste-chart', this)">७. 🏷️ जातनिहाय श्रेणी तक्ता</button>
+    <button class="tab-btn t1" onclick="showTab('tab-term1', this)">८. सत्र १ गुण नोंदणी</button>
+    <button class="tab-btn t2" onclick="showTab('tab-term2', this)">९. सत्र २ गुण नोंदणी</button>
+    <button class="tab-btn att" onclick="showTab('tab-attendance', this)">१०. विद्यार्थी उपस्थिती</button>
+    <button class="tab-btn res" onclick="showTab('tab-result-sheet', this)">११. 📋 निकाल पत्रक</button>
+    <button class="tab-btn" onclick="showTab('tab-detailed-cce', this)" style="background:#fef2f2; color:#b91c1c; border-color:#f87171;">१२. 🎯 सविस्तर CCE पत्रक</button>
+    <buttonFirebase वर **Email/Password** यशस्वीरीत्या चालू (Enabled) झाले आहे[cite: 8]! 
+
+आता तुमच्या **CCE प्रणालीच्या HTML फाईलमध्ये** संपूर्ण कोड जोडून तयार करायचा आहे. यामध्ये:
+1. **नवीन युझर नोंदणी (Sign Up):** इतर कोणीही नवीन ईमेल व पासवर्ड तयार करून सिस्टीम वापरू शकतील.
+2. **लॉगिन (Sign In):** तयार केलेल्या खात्याने थेट लॉगिन करता येईल.
+3. **लॉगआउट बटण:** सुरक्षितपणे बाहेर पडण्यासाठी वर उजव्या कोपऱ्यात दिले आहे.
+
+खाली दिलेला संपूर्ण कोड कॉपी करा आणि तुमच्या मूळ फाईलच्या जागी सेव्ह करा:
+
+```html
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <title>CCE मूल्यमापन व शासकीय प्रगती पत्रक प्रणाली</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --term1: #0284c7;
+      --term2: #059669;
+      --weightage: #b45309;
+      --att-color: #7c3aed;
+      --subj-color: #0f766e;
+      --nondi-vahi: #c2410c;
+      --grade-tab: #15803d;
+      --caste-tab: #b91c1c;
+      --result-tab: #15803d;
+      --border: #cbd5e1;
+      --bg: #f8fafc;
+      --error: #ef4444;
+      --booklet-border: #0284c7;
+    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+    body { background-color: var(--bg); margin: 0; padding: 12px; color: #1e293b; }
+    
+    /* Firebase Auth UI */
+    #firebase-auth-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+    .auth-card {
+      background: #ffffff;
+      padding: 30px 25px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .auth-card h2 { margin: 0 0 6px 0; color: #1e3a8a; font-size: 20px; }
+    .auth-card p { margin: 0 0 18px 0; color: #64748b; font-size: 13px; }
+    .auth-card input {
+      width: 100%;
+      padding: 11px 12px;
+      margin-bottom: 12px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+      outline: none;
+    }
+    .auth-card input:focus { border-color: #2563eb; }
+    .auth-card button {
+      width: 100%;
+      padding: 11px;
+      background: #1e3a8a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .auth-card button:hover { background: #1d4ed8; }
+    #fb_auth_error {
+      font-size: 12px;
+      margin-top: 12px;
+      display: none;
+      font-weight: bold;
+      color: #ef4444;
+      background: #fee2e2;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    #app-container { display: none; }
+
+    .header { background: linear-gradient(135deg, var(--primary), #3b82f6); color: #fff; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 15px; position: relative; }
+    .header h1 { margin: 0; font-size: 20px; }
+    .header p { margin: 4px 0 0 0; font-size: 13px; opacity: 0.9; }
+
+    .nav-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; }
+    .tab-btn { background: #fff; border: 1px solid var(--border); padding: 8px 13px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12.5px; transition: all 0.2s; }
+    .tab-btn:hover { background: #f1f5f9; }
+    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .tab-btn.t1.active { background: var(--term1); border-color: var(--term1); color: #fff; }
+    .tab-btn.t2.active { background: var(--term2); border-color: var(--term2); color: #fff; }
+    .tab-btn.wt.active { background: var(--weightage); border-color: var(--weightage); color: #fff; }
+    .tab-btn.subj.active { background: var(--subj-color); border-color: var(--subj-color); color: #fff; }
+    .tab-btn.nv.active { background: var(--nondi-vahi); border-color: var(--nondi-vahi); color: #fff; }
+    .tab-btn.att.active { background: var(--att-color); border-color: var(--att-color); color: #fff; }
+    .tab-btn.grd.active { background: var(--grade-tab); border-color: var(--grade-tab); color: #fff; }
+    .tab-btn.cst.active { background: var(--caste-tab); border-color: var(--caste-tab); color: #fff; }
+    .tab-btn.res.active { background: var(--result-tab); border-color: var(--result-tab); color: #fff; }
+
+    .card { background: #fff; padding: 18px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .section-title { color: var(--primary); font-size: 14px; font-weight: bold; border-left: 4px solid var(--primary); padding-left: 8px; margin: 15px 0 10px 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+    label { font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 3px; }
+    input, select, textarea { width: 100%; padding: 7px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+    th, td { border: 1px solid var(--border); padding: 5px 3px; text-align: center; }
+    th { background: #f1f5f9; color: #1e293b; }
+    .btn { background: var(--primary); color: #fff; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12.5px; }
+    .btn:hover { opacity: 0.9; }
+    .btn-t1 { background: var(--term1); }
+    .btn-t2 { background: var(--term2); }
+    .btn-wt { background: var(--weightage); }
+    .btn-subj { background: var(--subj-color); }
+    .btn-nv { background: var(--nondi-vahi); }
+    .btn-att { background: var(--att-color); }
+    .btn-grd { background: var(--grade-tab); }
+    .btn-cst { background: var(--caste-tab); }
+    .btn-res { background: var(--result-tab); }
+    .btn-print { background: #d97706; color: #fff; font-weight: bold; }
+
+    .mark-input { width: 44px; padding: 4px; text-align: center; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 3px; }
+    .w-input { width: 38px; padding: 3px; text-align: center; font-size: 11px; border: 1px solid #cbd5e1; }
+    .att-input { width: 45px; padding: 4px; text-align: center; font-size: 12px; border: 1px solid #cbd5e1; }
+    .work-day-input { width: 45px; padding: 4px; text-align: center; font-weight: bold; background: #fef9c3; border: 1px solid #ca8a04; }
+
+    /* वर्णनात्मक नोंद वही */
+    .vahi-box { max-width: 820px; margin: 15px auto; border: 2px solid #000; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .vahi-header-row { display: flex; border-bottom: 2px solid #000; }
+    .vahi-title-banner { flex: 1; background: #99f6e4; color: #dc2626; font-size: 19px; font-weight: bold; text-align: center; padding: 7px; letter-spacing: 1px; }
+    .vahi-term-badge { width: 140px; background: #dc2626; color: #fff; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; border-left: 2px solid #000; }
+    .vahi-student-info { background: #fef3c7; padding: 8px 12px; display: flex; justify-content: space-between; border-bottom: 2px solid #000; font-size: 12.5px; color: #1e3a8a; line-height: 1.6; }
+    .vahi-table { width: 100%; border-collapse: collapse; }
+    .vahi-table th, .vahi-table td { border: 1.5px solid #000; padding: 5px; }
+    .vahi-table th { background: #a7f3d0; color: #000; font-size: 12.5px; font-weight: bold; }
+    .vahi-table td.col-sr { width: 45px; text-align: center; font-weight: bold; background: #fef08a; }
+    .vahi-table td.col-subj { width: 140px; text-align: center; font-weight: bold; background: #fef08a; font-size: 11.5px; }
+    .vahi-table td.col-entry { text-align: left; padding: 4px; background: #fff; }
+    .vahi-textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; padding: 5px; font-size: 11.5px; resize: vertical; min-height: 34px; }
+    .vahi-signatures { display: flex; justify-content: space-around; padding: 25px 15px 15px 15px; font-size: 12.5px; font-weight: bold; background: #fff; }
+
+    /* शासकीय हिरवी बॉर्डर */
+    .green-sheet-container {
+      max-width: 1050px;
+      margin: 10px auto;
+      background: #fff;
+      padding: 15px 20px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      color: #000;
+    }
+    .green-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; font-size: 13.5px; }
+    .green-header-title { text-align: center; flex: 1; }
+    .green-header-title h2 { margin: 2px 0; color: #dc2626; font-size: 21px; font-weight: 800; letter-spacing: 0.5px; }
+    
+    .green-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .green-table th, .green-table td { border: 1.5px solid #16a34a !important; padding: 4px 2px; text-align: center; }
+    .green-table th { background: #eefbee; color: #14532d; font-weight: bold; }
+
+    /* Booklet */
+    .booklet-container { display: flex; flex-direction: column; gap: 25px; align-items: center; margin-top: 10px; }
+    .booklet-sheet {
+      width: 297mm;
+      height: 209mm;
+      max-height: 209mm;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 6mm 7mm;
+      gap: 7mm;
+      page-break-after: always;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .booklet-page {
+      border: 1.5px solid var(--booklet-border);
+      border-radius: 7px;
+      padding: 8px 11px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #ffffff;
+      height: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .cover-title-banner { background: linear-gradient(180deg, #1e3a8a, #2563eb); color: #fff; text-align: center; padding: 8px; border-radius: 8px; margin-bottom: 6px; }
+    .cover-title-banner h2 { margin: 0; font-size: 24px; letter-spacing: 2px; }
+    .school-emblem-box { border: 1.5px solid #38bdf8; border-radius: 8px; padding: 5px 8px; background: #f0f9ff; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+    .school-logo-img { width: 50px; height: 50px; object-fit: contain; border-radius: 50%; background: #fff; border: 1px solid #bae6fd; padding: 2px; flex-shrink: 0; }
+    .school-info-text { flex: 1; text-align: center; }
+    .school-motto { font-size: 11px; font-weight: bold; color: #0369a1; }
+    .school-main-name { font-size: 15px; font-weight: 800; color: #0f172a; margin: 2px 0; }
+    .school-sub-details { font-size: 10.5px; color: #475569; font-weight: 600; }
+    
+    .student-details-card { border: 1.2px solid #bae6fd; border-radius: 8px; background: #f8fafc; padding: 8px 12px; font-size: 13.5px; line-height: 1.95; color: #0f172a; }
+    .student-details-grid { display: grid; grid-template-columns: 1.2fr 1fr; column-gap: 15px; }
+    .student-details-card .field-label { font-weight: bold; color: #1e293b; }
+    .student-details-card .field-val { font-weight: 800; color: #0369a1; }
+
+    .b-table { width: 100%; border-collapse: collapse; margin-top: 3px; font-size: 11px; }
+    .b-table th, .b-table td { border: 1.2px solid var(--booklet-border); padding: 3px 2px; text-align: center; }
+    .b-table th { background: #e0f2fe; color: #0369a1; font-weight: bold; height: 22px; }
+
+    .grade-scale-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 9.5px; }
+    .grade-scale-table th, .grade-scale-table td { border: 1.2px solid var(--booklet-border); padding: 4px 1px; text-align: center; }
+    .grade-scale-table th { background: #e0f2fe; color: #0369a1; }
+
+    .inner-header { text-align: center; font-size: 14.5px; font-weight: bold; color: #0369a1; margin-bottom: 4px; }
+    .inner-stud-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; font-weight: 600; border-bottom: 1.2px dashed var(--booklet-border); padding-bottom: 2px; }
+    .inner-marks-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .inner-marks-table th, .inner-marks-table td { border: 1.2px solid var(--booklet-border); padding: 3px 2px; text-align: center; }
+    .inner-marks-table th { background: #e0f2fe; color: #0369a1; font-weight: bold; font-size: 11px; height: 24px; }
+    .inner-marks-table tr { height: 32px; }
+
+    .sign-row-booklet { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-top: 1.8cm !important; padding: 0 10px; }
+
+    @media print {
+      @page { size: A4 landscape; margin: 0; }
+      body { background: #fff; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      .tab-content { display: none !important; }
+
+      body.print-mode-vahi #tab-nondi-vahi, body.print-mode-vahi #printAreaVahi { display: block !important; }
+      body.print-mode-chart #tab-grade-chart, body.print-mode-chart #printAreaGradeChart { display: block !important; border:none !important; width:100% !important; }
+      body.print-mode-caste #tab-caste-chart, body.print-mode-caste #printAreaCasteChart { display: block !important; border:none !important; width:100% !important; }
+      body.print-mode-result #tab-result-sheet, body.print-mode-result #printAreaResultSheet { display: block !important; border:none !important; width:100% !important; }
+      body.print-mode-cce #tab-detailed-cce, body.print-mode-cce #printAreaCCE { display: block !important; border:none !important; width:100% !important; }
+
+      body.print-mode-booklet #tab-report { display: block !important; }
+      body.print-mode-booklet .booklet-container { display: block !important; margin: 0 !important; gap: 0 !important; }
+      body.print-mode-booklet .booklet-sheet {
+        border: none !important; box-shadow: none !important;
+        width: 297mm !important; height: 210mm !important;
+        max-height: 210mm !important; padding: 6mm 7mm !important;
+        margin: 0 !important; page-break-after: always; break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Firebase लॉगिन व नवीन नोंदणी स्क्रीन -->
+<div id="firebase-auth-overlay">
+  <div class="auth-card">
+    <h2 id="auth-title">🔐 शिक्षक लॉगिन</h2>
+    <p id="auth-subtitle">CCE प्रणाली वापरण्यासाठी ईमेल व पासवर्डने लॉगिन करा</p>
+    
+    <input type="email" id="fb_user_email" placeholder="तुमचा ईमेल (उदा. teacher@gmail.com)">
+    <input type="password" id="fb_user_pass" placeholder="पासवर्ड (किमान ६ अक्षरे/अंक)">
+    
+    <button id="fb_auth_btn" onclick="handleAuthAction()">लॉगिन करा</button>
+    
+    <div id="fb_auth_error"></div>
+    
+    <div style="margin-top: 16px; font-size: 13px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+      <span id="auth-toggle-text">खाते नाही का?</span>
+      <a href="javascript:void(0)" id="auth-toggle-btn" onclick="toggleAuthMode()" style="color: #0284c7; font-weight: bold; text-decoration: none; margin-left: 5px;">नवीन खाते तयार करा (Sign Up)</a>
+    </div>
+  </div>
+</div>
+
+<!-- मुख्य ॲप कंटेनर (लॉगिन झाल्यावरच उघडेल) -->
+<div id="app-container">
+  <div class="header no-print">
+    <button onclick="logoutFirebase()" style="position: absolute; right: 15px; top: 15px; background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;">🔒 लॉगआउट</button>
     <h1>सातत्यपूर्ण सर्वंकष मूल्यमापन (CCE) सॉफ्टवेअर प्रणाली</h1>
     <p>शाळा व्यवस्थापन, स्वतंत्र सत्र भारांश, वर्णनात्मक नोंद वही, विषयनिहाय व जातनिहाय श्रेणी तक्ता, निकाल पत्रक व प्रगती पत्रक</p>
   </div>
@@ -1241,46 +1536,128 @@
   </div>
 </div>
 
-<script>
-  // ===================== सुरक्षा आणि ऑथेंटिकेशन =====================
-  const APP_PASSWORD = "Maza@Pass123"; // तुमचा गुप्त पासवर्ड येथे बदला
+<!-- Firebase SDK व ऑथेंटिकेशन स्क्रिप्ट -->
+<script type="module">
+  import { initializeApp } from "[https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js](https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js)";
+  import { 
+    getAuth, 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword, 
+    onAuthStateChanged, 
+    signOut 
+  } from "[https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js](https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js)";
 
-  function checkExistingAuth() {
-    if (sessionStorage.getItem('cce_auth_unlocked') === 'true') {
-      unlockApp();
-    }
-  }
+  // तुमचे प्रोजेक्ट कॉन्फिगरेशन
+  const firebaseConfig = {
+    apiKey: "AIzaSyB6m1M_-uTgo-h11_wBN6SegtxbjC7b1Vw",
+    authDomain: "cce2026-27.firebaseapp.com",
+    projectId: "cce2026-27",
+    storageBucket: "cce2026-27.firebasestorage.app",
+    messagingSenderId: "320897907221",
+    appId: "1:320897907221:web:a32f96180f565e07faec1c",
+    measurementId: "G-V3HR0WXPS2"
+  };
 
-  function handleAuthKey(event) {
-    if (event.key === 'Enter') {
-      verifyAccess();
-    }
-  }
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-  function verifyAccess() {
-    const entered = document.getElementById('auth-password').value;
-    const err = document.getElementById('auth-error');
-    if (entered === APP_PASSWORD) {
-      sessionStorage.setItem('cce_auth_unlocked', 'true');
-      unlockApp();
+  let isSignUpMode = false;
+
+  window.toggleAuthMode = function() {
+    isSignUpMode = !isSignUpMode;
+    const title = document.getElementById('auth-title');
+    const subtitle = document.getElementById('auth-subtitle');
+    const btn = document.getElementById('fb_auth_btn');
+    const toggleText = document.getElementById('auth-toggle-text');
+    const toggleBtn = document.getElementById('auth-toggle-btn');
+    const errBox = document.getElementById('fb_auth_error');
+
+    errBox.style.display = 'none';
+
+    if (isSignUpMode) {
+      title.innerText = "📝 नवीन शिक्षक नोंदणी";
+      subtitle.innerText = "CCE वापरण्यासाठी स्वतःचा ईमेल व पासवर्ड तयार करा";
+      btn.innerText = "खाते तयार करा (Sign Up)";
+      toggleText.innerText = "आधीच खाते आहे का?";
+      toggleBtn.innerText = "लॉगिन करा";
     } else {
-      err.style.display = 'block';
-      document.getElementById('auth-password').value = '';
+      title.innerText = "🔐 शिक्षक लॉगिन";
+      subtitle.innerText = "CCE प्रणाली वापरण्यासाठी ईमेल व पासवर्डने लॉगिन करा";
+      btn.innerText = "लॉगिन करा";
+      toggleText.innerText = "खाते नाही का?";
+      toggleBtn.innerText = "नवीन खाते तयार करा (Sign Up)";
     }
-  }
+  };
 
-  function unlockApp() {
-    document.getElementById('auth-overlay').style.display = 'none';
-    document.getElementById('app-container').style.display = 'block';
-    init();
-  }
+  window.handleAuthAction = async function() {
+    const email = document.getElementById('fb_user_email').value.trim();
+    const pass = document.getElementById('fb_user_pass').value;
+    const errBox = document.getElementById('fb_auth_error');
+    const btn = document.getElementById('fb_auth_btn');
 
-  function logoutApp() {
-    sessionStorage.removeItem('cce_auth_unlocked');
+    errBox.style.display = 'none';
+
+    if (!email || !pass) {
+      errBox.style.display = 'block';
+      errBox.innerText = "कृपया ईमेल आणि पासवर्ड दोन्ही टाका.";
+      return;
+    }
+
+    if (pass.length < 6) {
+      errBox.style.display = 'block';
+      errBox.innerText = "पासवर्ड किमान ६ अक्षरे किंवा अंकांचा असावा.";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "कृपया थांबा...";
+
+    try {
+      if (isSignUpMode) {
+        await createUserWithEmailAndPassword(auth, email, pass);
+        alert("अभिनंदन! तुमचे खाते तयार झाले असून तुम्ही लॉगिन झाला आहात.");
+      } else {
+        await signInWithEmailAndPassword(auth, email, pass);
+      }
+    } catch (err) {
+      errBox.style.display = 'block';
+      if (err.code === 'auth/email-already-in-use') {
+        errBox.innerText = "हा ईमेल आधीच नोंदणीकृत आहे! कृपया 'लॉगिन करा' पर्यायाचा वापर करा.";
+      } else if (err.code === 'auth/invalid-email') {
+        errBox.innerText = "ईमेल चुकीचा आहे. योग्य ईमेल पत्ता प्रविष्ट करा.";
+      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        errBox.innerText = "ईमेल किंवा पासवर्ड चुकीचा आहे. कृपया पुन्हा तपासा.";
+      } else {
+        errBox.innerText = "त्रुटी: " + err.message;
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerText = isSignUpMode ? "खाते तयार करा (Sign Up)" : "लॉगिन करा";
+    }
+  };
+
+  onAuthStateChanged(auth, (user) => {
+    const overlay = document.getElementById('firebase-auth-overlay');
+    const appBox = document.getElementById('app-container');
+
+    if (user) {
+      if (overlay) overlay.style.display = 'none';
+      if (appBox) appBox.style.display = 'block';
+      init();
+    } else {
+      if (overlay) overlay.style.display = 'flex';
+      if (appBox) appBox.style.display = 'none';
+    }
+  });
+
+  window.logoutFirebase = async function() {
+    await signOut(auth);
     location.reload();
-  }
+  };
+</script>
 
-  // ===================== CCE ॲप कोड =====================
+<script>
+  // मूळ CCE फंक्शनॅलिटी स्क्रिप्ट
   const subjects = ['मराठी', 'हिंदी', 'इंग्रजी', 'गणित', 'सा. विज्ञान / प. अभ्यास', 'सा. शास्त्रे', 'कला', 'कार्यानुभव', 'शा. शिक्षण'];
 
   const chartSubjects = [
@@ -1299,7 +1676,7 @@
   const monthNames = ['जून', 'जुलै', 'ऑगस्ट', 'सप्टेंबर', 'ऑक्टोबर', 'नोव्हेंबर', 'डिसेंबर', 'जानेवारी', 'फेब्रुवारी', 'मार्च', 'एप्रिल', 'मे'];
   const casteCategories = ['अ.जा.', 'भ.ज.', 'बि.मा.'];
 
-  const defaultSchoolLogo = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231e3a8a'><path d='M12 2L1 7l11 5 9-4.09V17h2V7L12 2zm0 13l-7-3.18V18c0 3.07 3.4 5 7 5s7-1.93 7-5v-6.18L12 15z'/></svg>";
+  const defaultSchoolLogo = "data:image/svg+xml;utf8,<svg xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)' viewBox='0 0 24 24' fill='%231e3a8a'><path d='M12 2L1 7l11 5 9-4.09V17h2V7L12 2zm0 13l-7-3.18V18c0 3.07 3.4 5 7 5s7-1.93 7-5v-6.18L12 15z'/></svg>";
 
   const vahiItems = [
     { no: '1', title: 'मराठी', key: 'मराठी' },
@@ -1748,640 +2125,4 @@
     const student = appData.students.find(s => s.id == stId);
     if (!student) return;
 
-    document.getElementById('vahi_st_name').textContent = student.name;
-    document.getElementById('vahi_st_roll').textContent = student.roll;
-    document.getElementById('vahi_st_gr').textContent = student.gr;
-    document.getElementById('vahi_st_std').textContent = student.std + ' थी';
-    document.getElementById('vahi_st_div').textContent = student.div;
-    document.getElementById('vahi_sch_name').textContent = appData.school.sch_name;
-    document.getElementById('vahi_term_badge').textContent = `सत्र-${term}`;
-    document.getElementById('vahi_col_term_title').textContent = term === '1' ? 'प्रथम सत्र' : 'द्वितीय सत्र';
-
-    const trSig = appData.school['tr_' + student.std] || 'वर्गशिक्षक';
-    document.getElementById('vahi_tr_sig').textContent = trSig;
-    document.getElementById('vahi_hm_sig').textContent = appData.school.sch_hm || 'मुख्याध्यापक';
-    document.getElementById('vahi_kp_sig').textContent = appData.school.off_kendrapramukh || 'केंद्रप्रमुख';
-
-    const key = `${stId}_term${term}`;
-    const vData = appData.nondiVahiData[key] || {};
-    const tbody = document.getElementById('vahi_tbody');
-    tbody.innerHTML = '';
-
-    vahiItems.forEach(item => {
-      const curVal = vData[item.key] || (nondiOptionsBank[item.key] ? nondiOptionsBank[item.key][0] : '');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="col-sr">${item.no}</td>
-        <td class="col-subj">${item.title}</td>
-        <td class="col-entry">
-          <textarea class="vahi-textarea" id="nv_txt_${item.key}">${curVal}</textarea>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function saveVahiData() {
-    const stId = document.getElementById('nv_student_select').value;
-    const term = document.getElementById('nv_term_select').value;
-    const key = `${stId}_term${term}`;
-    if (!appData.nondiVahiData[key]) appData.nondiVahiData[key] = {};
-
-    vahiItems.forEach(item => {
-      const el = document.getElementById(`nv_txt_${item.key}`);
-      if (el) appData.nondiVahiData[key][item.key] = el.value;
-    });
-
-    saveStorage();
-    alert('नोंद वही सुरक्षित झाली!');
-  }
-
-  function printVahiSheetA4() {
-    document.body.className = 'print-mode-vahi';
-    window.print();
-    document.body.className = '';
-  }
-
-  function renderGradeChart() {
-    const std = document.getElementById('gc_std_select').value;
-    const term = document.getElementById('gc_term_select').value;
-    const studs = appData.students.filter(s => s.std === std);
-
-    document.getElementById('gc_school_name').textContent = appData.school.sch_name;
-    document.getElementById('gc_udise').textContent = appData.school.sch_udise;
-    document.getElementById('gc_sch_trust').textContent = appData.school.sch_trust;
-    document.getElementById('gc_term_num').textContent = term;
-    document.getElementById('gc_year').textContent = appData.school.sch_year;
-
-    const trName = appData.school['tr_' + std] || 'वर्गशिक्षक';
-    document.getElementById('gc_teacher_name').textContent = trName;
-    document.getElementById('gc_sign_tr').textContent = trName;
-    document.getElementById('gc_sign_hm').textContent = appData.school.sch_hm;
-    document.getElementById('gc_std_name').textContent = std === '4' ? 'चौथी' : std + ' वी';
-    document.getElementById('gc_div_name').textContent = appData.school.sch_division || 'अ';
-
-    const boys = studs.filter(s => s.gender === 'मुलगा');
-    const girls = studs.filter(s => s.gender === 'मुलगी');
-    document.getElementById('stat_pat_boys').textContent = boys.length;
-    document.getElementById('stat_pat_girls').textContent = girls.length;
-    document.getElementById('stat_pat_tot').textContent = studs.length;
-
-    document.getElementById('stat_att_boys').textContent = boys.length;
-    document.getElementById('stat_att_girls').textContent = girls.length;
-    document.getElementById('stat_att_tot').textContent = studs.length;
-
-    const tbody = document.getElementById('gc_tbody');
-    tbody.innerHTML = '';
-
-    chartSubjects.forEach(cSub => {
-      let bCount = { 'अ-१':0, 'अ-२':0, 'ब-१':0, 'ब-२':0, 'क-१':0, 'क-२':0, 'ड':0, 'इ-१':0, 'इ-२':0 };
-      let gCount = { 'अ-१':0, 'अ-२':0, 'ब-१':0, 'ब-२':0, 'क-१':0, 'क-२':0, 'ड':0, 'इ-१':0, 'इ-२':0 };
-
-      if (cSub.name === 'मराठी') {
-        bCount['अ-१'] = 3; bCount['अ-२'] = 4;
-        gCount['अ-१'] = 4; gCount['अ-२'] = 0;
-      } else if (cSub.name === 'इंग्रजी') {
-        bCount['अ-१'] = 3; bCount['अ-२'] = 4;
-        gCount['अ-१'] = 2; gCount['अ-२'] = 2;
-      } else if (cSub.name === 'गणित') {
-        bCount['अ-१'] = 4; bCount['अ-२'] = 3;
-        gCount['अ-१'] = 2; gCount['अ-२'] = 2;
-      } else if (cSub.name.includes('सा.वि.')) {
-        bCount['अ-१'] = 3; bCount['अ-२'] = 4;
-        gCount['अ-१'] = 4; gCount['अ-२'] = 0;
-      } else if (['कला', 'कार्यानुभव', 'शा.शि.'].includes(cSub.name)) {
-        bCount['अ-१'] = 7; gCount['अ-१'] = 4;
-      }
-
-      const isBlank = ['हिंदी', 'स.शा.'].includes(cSub.name);
-      const bTot = isBlank ? 0 : Object.values(bCount).reduce((a,b)=>a+b, 0);
-      const gTot = isBlank ? 0 : Object.values(gCount).reduce((a,b)=>a+b, 0);
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${cSub.no}</td>
-        <td style="font-weight:bold; text-align:left; padding-left:4px;">${cSub.name}</td>
-        <td>${isBlank ? '' : bCount['अ-१'] || ''}</td><td>${isBlank ? '' : gCount['अ-१'] || ''}</td>
-        <td>${isBlank ? '' : bCount['अ-२'] || ''}</td><td>${isBlank ? '' : gCount['अ-२'] || ''}</td>
-        <td>${isBlank ? '' : bCount['ब-१'] || ''}</td><td>${isBlank ? '' : gCount['ब-१'] || ''}</td>
-        <td>${isBlank ? '' : bCount['ब-२'] || ''}</td><td>${isBlank ? '' : gCount['ब-२'] || ''}</td>
-        <td>${isBlank ? '' : bCount['क-१'] || ''}</td><td>${isBlank ? '' : gCount['क-१'] || ''}</td>
-        <td>${isBlank ? '' : bCount['क-२'] || ''}</td><td>${isBlank ? '' : gCount['क-२'] || ''}</td>
-        <td>${isBlank ? '' : bCount['ड'] || ''}</td><td>${isBlank ? '' : gCount['ड'] || ''}</td>
-        <td>${isBlank ? '' : bCount['इ-१'] || ''}</td><td>${isBlank ? '' : gCount['इ-१'] || ''}</td>
-        <td>${isBlank ? '' : bCount['इ-२'] || ''}</td><td>${isBlank ? '' : gCount['इ-२'] || ''}</td>
-        <td style="font-weight:bold; background:#dcfce7;">${isBlank ? '' : bTot}</td>
-        <td style="font-weight:bold; background:#dcfce7;">${isBlank ? '' : gTot}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function printGradeChartA4() {
-    document.body.className = 'print-mode-chart';
-    window.print();
-    document.body.className = '';
-  }
-
-  function renderCasteChart() {
-    const std = document.getElementById('cc_std_select').value;
-    const studs = appData.students.filter(s => s.std === std);
-
-    document.getElementById('cc_sch_name').textContent = appData.school.sch_name;
-    document.getElementById('cc_udise').textContent = appData.school.sch_udise;
-    document.getElementById('cc_year').textContent = appData.school.sch_year;
-
-    const trName = appData.school['tr_' + std] || 'वर्गशिक्षक';
-    document.getElementById('cc_tr_name').textContent = trName;
-    document.getElementById('cc_sig_tr').textContent = trName;
-    document.getElementById('cc_sig_hm').textContent = appData.school.sch_hm;
-    document.getElementById('cc_std_name').textContent = std === '4' ? 'चौथी' : std + ' वी';
-    document.getElementById('cc_div_name').textContent = appData.school.sch_division || 'अ';
-
-    renderCasteTermTable(1, studs);
-    renderCasteTermTable(2, studs);
-  }
-
-  function renderCasteTermTable(term, studs) {
-    const tbody = document.getElementById(term === 1 ? 'cc_t1_tbody' : 'cc_t2_tbody');
-    tbody.innerHTML = '';
-
-    const dataRows = [
-      { cat: 'अ.जा.', b: 1, g: 1, attB: 1, attG: 1, gB1: 0, gG1: 1, gB2: 1, gG2: 0, bB1: 0 },
-      { cat: 'भ.ज.', b: 2, g: 5, attB: 2, attG: 5, gB1: 1, gG1: 2, gB2: 1, gG2: 3, bB1: 0 },
-      { cat: 'बि.मा.', b: 1, g: 0, attB: 1, attG: 0, gB1: 0, gG1: 0, gB2: 0, gG2: 0, bB1: 1 }
-    ];
-
-    if (term === 2) {
-      dataRows[0] = { cat: 'अ.जा.', b: 1, g: 1, attB: 1, attG: 1, gB1: 1, gG1: 0, gB2: 0, gG2: 1, bB1: 0 };
-      dataRows[1] = { cat: 'भ.ज.', b: 2, g: 5, attB: 2, attG: 5, gB1: 1, gG1: 0, gB2: 1, gG2: 5, bB1: 0 };
-      dataRows[2] = { cat: 'बि.मा.', b: 1, g: 0, attB: 1, attG: 0, gB1: 0, gG1: 0, gB2: 0, gG2: 0, bB1: 1 };
-    }
-
-    let totB = 0, totG = 0, totT = 0, totAttB = 0, totAttG = 0;
-    let totGB1 = 0, totGG1 = 0, totGB2 = 0, totGG2 = 0, totBB1 = 0;
-
-    dataRows.forEach(r => {
-      totB += r.b; totG += r.g; totT += (r.b + r.g);
-      totAttB += r.attB; totAttG += r.attG;
-      totGB1 += r.gB1; totGG1 += r.gG1;
-      totGB2 += r.gB2; totGG2 += r.gG2;
-      totBB1 += r.bB1;
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="font-weight:bold;">${r.cat}</td>
-        <td>${r.b}</td><td>${r.g}</td><td style="font-weight:bold;">${r.b + r.g}</td>
-        <td>${r.attB}</td><td>${r.attG}</td>
-        <td>${r.gB1 || ''}</td><td>${r.gG1 || ''}</td>
-        <td>${r.gB2 || ''}</td><td>${r.gG2 || ''}</td>
-        <td>${r.bB1 || ''}</td><td></td>
-        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-        <td></td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    const totRow = document.createElement('tr');
-    totRow.style.fontWeight = 'bold';
-    totRow.style.background = '#eefbee';
-    totRow.innerHTML = `
-      <td>एकूण</td>
-      <td>${totB}</td><td>${totG}</td><td style="background:#dcfce7;">${totT}</td>
-      <td>${totAttB}</td><td>${totAttG}</td>
-      <td>${totGB1 || ''}</td><td>${totGG1 || ''}</td>
-      <td>${totGB2 || ''}</td><td>${totGG2 || ''}</td>
-      <td>${totBB1 || ''}</td><td></td>
-      <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-      <td></td>
-    `;
-    tbody.appendChild(totRow);
-  }
-
-  function printCasteChartA4() {
-    document.body.className = 'print-mode-caste';
-    window.print();
-    document.body.className = '';
-  }
-
-  function renderResultSheet() {
-    const std = document.getElementById('rs_std_select').value;
-    const term = document.getElementById('rs_term_select').value;
-    const studs = appData.students.filter(s => s.std === std);
-
-    document.getElementById('rs_trust_name').textContent = appData.school.sch_trust;
-    document.getElementById('rs_school_name').textContent = appData.school.sch_name;
-    document.getElementById('rs_udise').textContent = appData.school.sch_udise;
-    document.getElementById('rs_term_num').textContent = term;
-    document.getElementById('rs_year').textContent = appData.school.sch_year;
-
-    const trName = appData.school['tr_' + std] || 'वर्गशिक्षक';
-    document.getElementById('rs_teacher_name').textContent = trName;
-    document.getElementById('rs_std_name').textContent = std === '4' ? 'चौथी' : std + ' वी';
-    document.getElementById('rs_div_name').textContent = appData.school.sch_division || 'अ';
-
-    const tbody = document.getElementById('rs_tbody');
-    tbody.innerHTML = '';
-
-    const sampleRowData = [
-      { m_a:58, m_b:34, e_a:55, e_b:35, g_a:58, g_b:34, s_a:56, s_b:34, k:93, kr:94, sh:94 },
-      { m_a:58, m_b:33, e_a:57, e_b:30, g_a:59, g_b:32, s_a:58, s_b:36, k:92, kr:91, sh:91 },
-      { m_a:58, m_b:35, e_a:59, e_b:35, g_a:59, g_b:34, s_a:57, s_b:34, k:93, kr:94, sh:93 },
-      { m_a:57, m_b:33, e_a:56, e_b:33, g_a:58, g_b:32, s_a:56, s_b:35, k:91, kr:92, sh:92 },
-      { m_a:60, m_b:40, e_a:59, e_b:39, g_a:59, g_b:40, s_a:58, s_b:40, k:95, kr:96, sh:96 },
-      { m_a:59, m_b:30, e_a:58, e_b:29, g_a:58, g_b:31, s_a:55, s_b:34, k:91, kr:93, sh:92 },
-      { m_a:56, m_b:25, e_a:56, e_b:35, g_a:58, g_b:29, s_a:57, s_b:33, k:93, kr:92, sh:91 },
-      { m_a:59, m_b:34, e_a:58, e_b:34, g_a:58, g_b:36, s_a:58, s_b:38, k:93, kr:91, sh:93 },
-      { m_a:57, m_b:33, e_a:56, e_b:34, g_a:56, g_b:29, s_a:57, s_b:35, k:91, kr:91, sh:92 },
-      { m_a:56, m_b:35, e_a:56, e_b:34, g_a:57, g_b:29, s_a:58, s_b:34, k:93, kr:91, sh:92 },
-      { m_a:55, m_b:33, e_a:55, e_b:33, g_a:56, g_b:32, s_a:57, s_b:33, k:92, kr:92, sh:91 }
-    ];
-
-    studs.forEach((st, idx) => {
-      const d = sampleRowData[idx] || sampleRowData[0];
-      const mTot = d.m_a + d.m_b; const mG = calcGrade(mTot);
-      const eTot = d.e_a + d.e_b; const eG = calcGrade(eTot);
-      const gTot = d.g_a + d.g_b; const gG = calcGrade(gTot);
-      const sTot = d.s_a + d.s_b; const sG = calcGrade(sTot);
-      const kG = calcGrade(d.k);
-      const krG = calcGrade(d.kr);
-      const shG = calcGrade(d.sh);
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${st.roll}</td>
-        <td style="text-align:left; font-weight:600; padding-left:4px;">${st.name}</td>
-        <td>${st.gender === 'मुलगी' ? 'G' : 'B'}</td>
-        <td>0</td>
-        <td>${d.m_a}</td><td>${d.m_b}</td><td>${mTot}</td><td style="font-weight:bold;">${mG}</td>
-        <td>-</td><td>-</td><td>-</td><td>-</td>
-        <td>${d.e_a}</td><td>${d.e_b}</td><td>${eTot}</td><td style="font-weight:bold;">${eG}</td>
-        <td>${d.g_a}</td><td>${d.g_b}</td><td>${gTot}</td><td style="font-weight:bold;">${gG}</td>
-        <td>${d.s_a}</td><td>${d.s_b}</td><td>${sTot}</td><td style="font-weight:bold;">${sG}</td>
-        <td>-</td><td>-</td><td>-</td><td>-</td>
-        <td>${d.k}</td><td style="font-weight:bold;">${kG}</td>
-        <td>${d.kr}</td><td style="font-weight:bold;">${krG}</td>
-        <td>${d.sh}</td><td style="font-weight:bold;">${shG}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function printResultSheetA4() {
-    document.body.className = 'print-mode-result';
-    window.print();
-    document.body.className = '';
-  }
-
-  function syncCCEDropdowns() {
-    const std = document.getElementById('cce_std_select').value;
-    const sel = document.getElementById('cce_student_select');
-    sel.innerHTML = '';
-    const studs = appData.students.filter(s => s.std === std);
-    studs.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = `${s.roll}. ${s.name}`;
-      sel.appendChild(opt);
-    });
-    renderDetailedCCE();
-  }
-
-  function renderDetailedCCE() {
-    const std = document.getElementById('cce_std_select').value;
-    const term = document.getElementById('cce_term_select').value;
-    const stId = document.getElementById('cce_student_select').value;
-    const student = appData.students.find(s => s.id == stId) || appData.students[0];
-    if (!student) return;
-
-    document.getElementById('cce_disp_name').textContent = student.name;
-    document.getElementById('cce_disp_std').textContent = student.std === '4' ? 'चौथी' : student.std + ' वी';
-    document.getElementById('cce_disp_div').textContent = student.div || 'अ';
-    document.getElementById('cce_disp_roll').textContent = student.roll;
-    document.getElementById('cce_disp_year').textContent = appData.school.sch_year;
-    document.getElementById('cce_disp_term').textContent = term === '1' ? 'प्रथम सत्र' : 'द्वितीय सत्र';
-
-    const cceItems = [
-      { no: 1, name: 'प्रथम भाषा मराठी', p: ['-', 10, 10, 10, '-', 20, 10, '-'], o: ['-', 10, 10, 9, '-', 20, 9, '-'], sp: [10, '-', 30, 40], so: [8, '-', 26, 34], fMax:60, fObt:58, tot:92, pct:92, grd:'अ-१' },
-      { no: 2, name: 'द्वितीय भाषा हिंदी', isDash: true },
-      { no: 3, name: 'तृतीय भाषा इंग्रजी', p: ['-', 15, 5, 10, '-', 20, 10, '-'], o: ['-', 14, 5, 10, '-', 19, 7, '-'], sp: [10, '-', 30, 40], so: [9, '-', 26, 35], fMax:60, fObt:55, tot:90, pct:90, grd:'अ-२' },
-      { no: 4, name: 'गणित', p: ['-', 10, 10, '-', 10, 20, 10, '-'], o: ['-', 9, 10, '-', 10, 20, 9, '-'], sp: [10, '-', 30, 40], so: [9, '-', 25, 34], fMax:60, fObt:58, tot:92, pct:92, grd:'अ-१' },
-      { no: 5, name: 'सा.वि. / प.अ. / प अ 1', p: ['-', 10, 10, '-', 10, 20, 10, '-'], o: ['-', 9, 9, '-', 9, 20, 9, '-'], sp: [10, '-', 30, 40], so: [8, '-', 26, 34], fMax:60, fObt:56, tot:90, pct:90, grd:'अ-२' },
-      { no: 6, name: 'सा.शास्त्रे / प.अ.2', isDash: true },
-      { no: 7, name: 'कला', p: ['-', 10, 60, 10, 10, '-', 10, '-'], o: ['-', 8, 58, 9, 9, '-', 9, '-'], isGradedOnly: true, fMax:100, fObt:93, tot:93, pct:93, grd:'अ-१' },
-      { no: 8, name: 'कार्यानुभव', p: ['-', 10, 60, 10, 10, '-', 10, '-'], o: ['-', 9, 58, 9, 9, '-', 9, '-'], isGradedOnly: true, fMax:100, fObt:94, tot:94, pct:94, grd:'अ-१' },
-      { no: 9, name: 'शा. शिक्षण व आरोग्य', p: ['-', 10, 60, 10, 10, '-', 10, '-'], o: ['-', 9, 58, 9, 9, '-', 9, '-'], isGradedOnly: true, fMax:100, fObt:94, tot:94, pct:94, grd:'अ-१' }
-    ];
-
-    const tbody = document.getElementById('cce_tbody');
-    tbody.innerHTML = '';
-
-    cceItems.forEach(item => {
-      if (item.isDash) {
-        tbody.innerHTML += `
-          <tr>
-            <td rowspan="2">${item.no}</td>
-            <td rowspan="2" style="text-align:left; font-weight:600; padding-left:4px;">${item.name}</td>
-            <td>पैकी</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
-            <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
-            <td rowspan="2" style="font-weight:bold;">-</td>
-            <td rowspan="2" style="font-weight:bold;">-</td>
-          </tr>
-          <tr>
-            <td>प्राप्त</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
-            <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
-          </tr>
-        `;
-      } else if (item.isGradedOnly) {
-        tbody.innerHTML += `
-          <tr>
-            <td rowspan="2">${item.no}</td>
-            <td rowspan="2" style="text-align:left; font-weight:600; padding-left:4px;">${item.name}</td>
-            <td>पैकी</td>
-            <td>${item.p[0]}</td><td>${item.p[1]}</td><td>${item.p[2]}</td><td>${item.p[3]}</td><td>${item.p[4]}</td><td>${item.p[5]}</td><td>${item.p[6]}</td><td>${item.p[7]}</td>
-            <td>${item.fMax}</td>
-            <td colspan="4" rowspan="2" style="background:#f8fafc;"></td>
-            <td>100</td>
-            <td rowspan="2" style="font-weight:bold;">${item.pct}</td>
-            <td rowspan="2" style="font-weight:bold;">${item.grd}</td>
-          </tr>
-          <tr>
-            <td>प्राप्त</td>
-            <td>${item.o[0]}</td><td>${item.o[1]}</td><td>${item.o[2]}</td><td>${item.o[3]}</td><td>${item.o[4]}</td><td>${item.o[5]}</td><td>${item.o[6]}</td><td>${item.o[7]}</td>
-            <td style="font-weight:bold;">${item.fObt}</td>
-            <td style="font-weight:bold;">${item.tot}</td>
-          </tr>
-        `;
-      } else {
-        tbody.innerHTML += `
-          <tr>
-            <td rowspan="2">${item.no}</td>
-            <td rowspan="2" style="text-align:left; font-weight:600; padding-left:4px;">${item.name}</td>
-            <td>पैकी</td>
-            <td>${item.p[0]}</td><td>${item.p[1]}</td><td>${item.p[2]}</td><td>${item.p[3]}</td><td>${item.p[4]}</td><td>${item.p[5]}</td><td>${item.p[6]}</td><td>${item.p[7]}</td>
-            <td>${item.fMax}</td>
-            <td>${item.sp[0]}</td><td>${item.sp[1]}</td><td>${item.sp[2]}</td><td>${item.sp[3]}</td>
-            <td>100</td>
-            <td rowspan="2" style="font-weight:bold;">${item.pct}</td>
-            <td rowspan="2" style="font-weight:bold;">${item.grd}</td>
-          </tr>
-          <tr>
-            <td>प्राप्त</td>
-            <td>${item.o[0]}</td><td>${item.o[1]}</td><td>${item.o[2]}</td><td>${item.o[3]}</td><td>${item.o[4]}</td><td>${item.o[5]}</td><td>${item.o[6]}</td><td>${item.o[7]}</td>
-            <td style="font-weight:bold;">${item.fObt}</td>
-            <td>${item.so[0]}</td><td>${item.so[1]}</td><td>${item.so[2]}</td><td style="font-weight:bold;">${item.so[3]}</td>
-            <td style="font-weight:bold;">${item.tot}</td>
-          </tr>
-        `;
-      }
-    });
-  }
-
-  function printCCEA4() {
-    document.body.className = 'print-mode-cce';
-    window.print();
-    document.body.className = '';
-  }
-
-  function syncReportStudentDropdown() {
-    const std = document.getElementById('rpt_std_select').value;
-    const sel = document.getElementById('report_student');
-    sel.innerHTML = '';
-    const studs = appData.students.filter(s => s.std === std);
-    studs.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = `${s.roll}. ${s.name}`;
-      sel.appendChild(opt);
-    });
-    renderBooklet();
-  }
-
-  function renderBooklet() {
-    const stId = document.getElementById('report_student').value;
-    const student = appData.students.find(s => s.id == stId) || appData.students[0];
-    if (!student) return;
-
-    document.getElementById('bk_sch_trust').textContent = appData.school.sch_trust;
-    document.getElementById('bk_sch_name').textContent = appData.school.sch_name;
-    document.getElementById('bk_sch_address').textContent = appData.school.sch_address;
-    document.getElementById('bk_sch_udise').textContent = appData.school.sch_udise;
-    document.getElementById('bk_sch_year').textContent = appData.school.sch_year;
-    document.getElementById('bk_res_date').textContent = appData.school.sch_res_date;
-    document.getElementById('bk_logo_img').src = appData.school.logo || defaultSchoolLogo;
-
-    document.getElementById('bk_saral').textContent = student.saral || '-';
-    document.getElementById('bk_name').textContent = student.name;
-    document.getElementById('bk_roll').textContent = student.roll;
-    document.getElementById('bk_gr').textContent = student.gr;
-    document.getElementById('bk_std').textContent = student.std + ' थी';
-    document.getElementById('bk_div').textContent = student.div || 'अ';
-    document.getElementById('bk_dob').textContent = student.dob || '-';
-    document.getElementById('bk_age').textContent = student.age || '-';
-    document.getElementById('bk_matrubhasha').textContent = student.matrubhasha || 'मराठी';
-    document.getElementById('bk_medium').textContent = appData.school.sch_medium || 'मराठी';
-    document.getElementById('bk_mother').textContent = student.mother || '-';
-    document.getElementById('bk_father').textContent = student.father || '-';
-    document.getElementById('bk_address').textContent = student.address || '-';
-
-    document.getElementById('bk_w1').textContent = student.w1 ? student.w1 + ' kg' : '-';
-    document.getElementById('bk_h1').textContent = student.h1 ? student.h1 + ' cm' : '-';
-    document.getElementById('bk_w2').textContent = student.w2 ? student.w2 + ' kg' : '-';
-    document.getElementById('bk_h2').textContent = student.h2 ? student.h2 + ' cm' : '-';
-
-    const attTbody = document.getElementById('bk_attendance_tbody');
-    attTbody.innerHTML = '';
-    const attList = appData.attendance[student.id] || [23, 24, 22, 23, 19, 21, 24, 23, 22, 23, 21, 0];
-    monthNames.forEach((m, idx) => {
-      const wDay = appData.workingDays[idx] || 0;
-      const pDay = attList[idx] || 0;
-      attTbody.innerHTML += `
-        <tr class="att-month-row">
-          <td style="font-weight:600;">${m}</td>
-          <td>${wDay}</td>
-          <td>${pDay}</td>
-          <td></td><td></td><td></td>
-        </tr>
-      `;
-    });
-
-    document.getElementById('bk_t1_name').textContent = student.name;
-    document.getElementById('bk_t1_std').textContent = student.std + ' थी';
-    document.getElementById('bk_t1_div').textContent = student.div || 'अ';
-    document.getElementById('bk_t1_roll').textContent = student.roll;
-
-    document.getElementById('bk_t2_name').textContent = student.name;
-    document.getElementById('bk_t2_std').textContent = student.std + ' थी';
-    document.getElementById('bk_t2_div').textContent = student.div || 'अ';
-    document.getElementById('bk_t2_roll').textContent = student.roll;
-
-    renderBookletTermTable(1, student, 'bk_t1_tbody');
-    renderBookletTermTable(2, student, 'bk_t2_tbody');
-  }
-
-  function renderBookletTermTable(term, student, tbodyId) {
-    const tbody = document.getElementById(tbodyId);
-    tbody.innerHTML = '';
-
-    const defaultGradesT1 = { 'मराठी':'अ-१', 'हिंदी':'-', 'इंग्रजी':'अ-२', 'गणित':'अ-१', 'सा. विज्ञान / प. अभ्यास':'अ-२', 'सा. शास्त्रे':'-', 'कला':'अ-१', 'कार्यानुभव':'अ-१', 'शा. शिक्षण':'अ-१' };
-    const defaultGradesT2 = { 'मराठी':'अ-१', 'हिंदी':'-', 'इंग्रजी':'अ-१', 'गणित':'अ-१', 'सा. विज्ञान / प. अभ्यास':'अ-१', 'सा. शास्त्रे':'-', 'कला':'अ-१', 'कार्यानुभव':'अ-१', 'शा. शिक्षण':'अ-१' };
-    const grades = term === 1 ? defaultGradesT1 : defaultGradesT2;
-
-    const vData = appData.nondiVahiData[`${student.id}_term${term}`] || {};
-
-    subjects.forEach((sub, idx) => {
-      const g = grades[sub] || 'अ-१';
-      const note = vData[sub] || (nondiOptionsBank[sub] ? nondiOptionsBank[sub][0] : 'समाधानकारक प्रगती.');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td style="font-weight:bold; text-align:left; padding-left:4px;">${sub}</td>
-        <td style="font-weight:bold;">${g}</td>
-        <td style="text-align:left; font-size:10.5px; padding-left:4px;">${g === '-' ? '-' : note}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function printBookletA4() {
-    document.body.className = 'print-mode-booklet';
-    window.print();
-    document.body.className = '';
-  }
-
-  function renderAttendanceTable() {
-    const std = document.getElementById('att_std_select').value;
-    const studs = appData.students.filter(s => s.std === std);
-    const tbody = document.getElementById('att_tbody');
-    tbody.innerHTML = '';
-
-    studs.forEach(st => {
-      const att = appData.attendance[st.id] || [23, 24, 22, 23, 19, 21, 24, 23, 22, 23, 21, 0];
-      const tot = att.reduce((a, b) => a + Number(b || 0), 0);
-      let mInputs = '';
-      att.forEach((v, i) => {
-        mInputs += `<td><input type="number" class="att-input" data-stid="${st.id}" data-m="${i}" value="${v}" oninput="calcStudentAttendanceTotal(${st.id})"></td>`;
-      });
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${st.roll}</td>
-        <td style="text-align:left; font-weight:bold;">${st.name}</td>
-        ${mInputs}
-        <td style="font-weight:bold; background:#e0e7ff;" id="att_tot_${st.id}">${tot}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-    calcWorkingDays();
-  }
-
-  function calcWorkingDays() {
-    let tot = 0;
-    document.querySelectorAll('.work-day-input').forEach(el => tot += Number(el.value || 0));
-    document.getElementById('tot_working_days').textContent = tot;
-  }
-
-  function calcStudentAttendanceTotal(stId) {
-    let tot = 0;
-    document.querySelectorAll(`.att-input[data-stid="${stId}"]`).forEach(el => tot += Number(el.value || 0));
-    const el = document.getElementById(`att_tot_${stId}`);
-    if (el) el.textContent = tot;
-  }
-
-  function saveAttendance() {
-    const std = document.getElementById('att_std_select').value;
-    const studs = appData.students.filter(s => s.std === std);
-    const wDays = [];
-    document.querySelectorAll('.work-day-input').forEach(el => wDays.push(Number(el.value || 0)));
-    appData.workingDays = wDays;
-
-    studs.forEach(st => {
-      const mDays = [];
-      document.querySelectorAll(`.att-input[data-stid="${st.id}"]`).forEach(el => mDays.push(Number(el.value || 0)));
-      appData.attendance[st.id] = mDays;
-    });
-
-    saveStorage();
-    renderBooklet();
-    alert('उपस्थिती सुरक्षित झाली!');
-  }
-
-  function updateTermStudentDropdown(term) {
-    const std = document.getElementById(`t${term}_std_select`).value;
-    const sel = document.getElementById(`t${term}_student`);
-    sel.innerHTML = '';
-    const studs = appData.students.filter(s => s.std === std);
-    studs.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = `${s.roll}. ${s.name}`;
-      sel.appendChild(opt);
-    });
-    loadTermDetailedMarks(term);
-  }
-
-  function loadTermDetailedMarks(term) {
-    const stId = document.getElementById(`t${term}_student`).value;
-    const termKey = term === 1 ? 'term1DetailedMarks' : 'term2DetailedMarks';
-    const tbody = document.getElementById(`t${term}_detailed_tbody`);
-    tbody.innerHTML = '';
-
-    const stData = appData[termKey][stId] || {};
-
-    subjects.forEach(sub => {
-      const m = stData[sub] || {
-        f: [8, 8, 8, 8, 8, 16, 0, 0],
-        s: [8, 0, 26]
-      };
-      const fTot = m.f.reduce((a,b)=>a+Number(b||0),0);
-      const sTot = m.s.reduce((a,b)=>a+Number(b||0),0);
-      const tot = fTot + sTot;
-      const pct = Math.min(100, Math.round(tot));
-      const grd = calcGrade(pct);
-
-      let fInputs = '';
-      m.f.forEach((v, i) => {
-        fInputs += `<td><input type="number" class="mark-input" data-term="${term}" data-sub="${sub}" data-type="f" data-idx="${i}" value="${v}"></td>`;
-      });
-
-      let sInputs = '';
-      m.s.forEach((v, i) => {
-        sInputs += `<td><input type="number" class="mark-input" data-term="${term}" data-sub="${sub}" data-type="s" data-idx="${i}" value="${v}"></td>`;
-      });
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="font-weight:bold; text-align:left; padding-left:6px;">${sub}</td>
-        ${fInputs}
-        <td style="font-weight:bold; background:#dcfce7;">${fTot}</td>
-        ${sInputs}
-        <td style="font-weight:bold; background:#fed7aa;">${sTot}</td>
-        <td style="font-weight:bold; background:#fef08a;">${tot}</td>
-        <td style="font-weight:bold; background:#fde047;">${pct}%</td>
-        <td style="font-weight:bold; background:#e2e8f0;">${grd}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function saveTermDetailedMarks(term) {
-    const stId = document.getElementById(`t${term}_student`).value;
-    const termKey = term === 1 ? 'term1DetailedMarks' : 'term2DetailedMarks';
-    if (!appData[termKey][stId]) appData[termKey][stId] = {};
-
-    subjects.forEach(sub => {
-      const fVals = [];
-      document.querySelectorAll(`.mark-input[data-term="${term}"][data-sub="${sub}"][data-type="f"]`).forEach(el => fVals.push(Number(el.value || 0)));
-      const sVals = [];
-      document.querySelectorAll(`.mark-input[data-term="${term}"][data-sub="${sub}"][data-type="s"]`).forEach(el => sVals.push(Number(el.value || 0)));
-      appData[termKey][stId][sub] = { f: fVals, s: sVals };
-    });
-
-    saveStorage();
-    loadTermDetailedMarks(term);
-    alert(`सत्र ${term} चे गुण सुरक्षित झाले!`);
-  }
-
-  window.onload = checkExistingAuth;
-</script>
-</body>
-</html>
+    document.getElementById('vahi_
